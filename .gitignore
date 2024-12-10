@@ -36,22 +36,16 @@ build/
 /out/
 
 # Ignore Maven-specific files
-*.iml
 .idea/
 *.log
 *.tmp
 
-# Ignore IntelliJ-specific files
-*.ipr
-*.iws
-.idea/
 
 # Ignore operating system files
 .DS_Store
 Thumbs.db
 
 # Ignore logs
-*.log
 logs/
 
 # Ignore Spring Boot specific files
