@@ -5,22 +5,49 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "vendor_activities")
 public class VendorActivity {
-
     @Id
     private String id;
     private int vendorId;
-    private String activity; // e.g., "Added Ticket-1"
+    private String ticketId;
     private String timestamp;
 
-    public VendorActivity(String id, int vendorId, String activity, String timestamp) {
+    public VendorActivity(String id, int vendorId, String ticketId, String timestamp) {
         this.id = id;
         this.vendorId = vendorId;
-        this.activity = activity;
+        this.ticketId = ticketId;
         this.timestamp = timestamp;
     }
 
-    public VendorActivity() {}
+    // Getters and Setters
+    public String getId() {
+        return id;
+    }
 
-    // Getters and setters
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public int getVendorId() {
+        return vendorId;
+    }
+
+    public void setVendorId(int vendorId) {
+        this.vendorId = vendorId;
+    }
+
+    public String getTicketId() {
+        return ticketId;
+    }
+
+    public void setTicketId(String ticketId) {
+        this.ticketId = ticketId;
+    }
+
+    public String getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(String timestamp) {
+        this.timestamp = timestamp;
+    }
 }
-

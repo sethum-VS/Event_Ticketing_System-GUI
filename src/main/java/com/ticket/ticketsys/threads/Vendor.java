@@ -1,56 +1,37 @@
 package com.ticket.ticketsys.threads;
 
-import com.ticket.ticketsys.entity.VendorActivity;
-import com.ticket.ticketsys.repository.VendorActivityRepository;
 import com.ticket.ticketsys.service.TicketPoolService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import com.ticket.ticketsys.service.LoggerService;
 
-@Component
 public class Vendor implements Runnable {
 
-    private final TicketPoolService ticketPoolService;
-    private final int ticketReleaseRate;
     private final int vendorId;
+    private final int releaseRate; // In milliseconds
+    private final TicketPoolService ticketPoolService;
+    private final LoggerService loggerService;
 
-    @Autowired
-    private VendorActivityRepository vendorActivityRepository;
-
-    @Autowired
-    public Vendor(TicketPoolService ticketPoolService, int ticketReleaseRate, int vendorId) {
-        this.ticketPoolService = ticketPoolService;
-        this.ticketReleaseRate = ticketReleaseRate;
+    public Vendor(int vendorId, int releaseRate, TicketPoolService ticketPoolService, LoggerService loggerService) {
         this.vendorId = vendorId;
+        this.releaseRate = releaseRate;
+        this.ticketPoolService = ticketPoolService;
+        this.loggerService = loggerService;
     }
 
     @Override
     public void run() {
-        while (true) {
-            synchronized (ticketPoolService) {
-                if (ticketPoolService.getTotalTicketsRetrieved() >= ticketPoolService.getMaxTicketCapacity()) {
-                    ticketPoolService.setVendorFinished();
-                    vendorActivityRepository.save(new VendorActivity(null, vendorId, "Stopped Adding - Max Capacity Reached", null));
-                    return;
-                }
+        try {
+            while (ticketPoolService.canAddTickets()) {
+                String ticketId = "Ticket-" + System.nanoTime();
+                ticketPoolService.addTicket(ticketId, vendorId);
 
-                if (ticketPoolService.getTotalTicketsAdded() < ticketPoolService.getMaxTicketCapacity()) {
-                    String ticket = "Ticket-" + (ticketPoolService.getTotalTicketsAdded() + 1);
-                    ticketPoolService.addTickets(ticket, vendorId);
-                    vendorActivityRepository.save(new VendorActivity(null, vendorId, "Added: " + ticket, null));
-                } else {
-                    vendorActivityRepository.save(new VendorActivity(null, vendorId, "Stopped Adding - Pool Full", null));
-                    ticketPoolService.setVendorFinished();
-                    return;
-                }
-            }
+                loggerService.logInfo("Vendor " + vendorId + " added: " + ticketId);
 
-            try {
-                Thread.sleep(ticketReleaseRate);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                vendorActivityRepository.save(new VendorActivity(null, vendorId, "Interrupted", null));
-                return;
+                Thread.sleep(releaseRate);
             }
+            loggerService.logInfo("Vendor " + vendorId + " finished adding tickets.");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            loggerService.logError("Vendor " + vendorId + " interrupted.");
         }
     }
 }

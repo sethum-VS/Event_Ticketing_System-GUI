@@ -1,49 +1,40 @@
 package com.ticket.ticketsys.threads;
 
-import com.ticket.ticketsys.entity.CustomerActivity;
-import com.ticket.ticketsys.repository.CustomerActivityRepository;
 import com.ticket.ticketsys.service.TicketPoolService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import com.ticket.ticketsys.service.LoggerService;
 
-@Component
 public class Customer implements Runnable {
 
-    private final TicketPoolService ticketPoolService;
-    private final int customerRetrievalInterval;
     private final int customerId;
+    private final int retrievalRate; // In milliseconds
+    private final TicketPoolService ticketPoolService;
+    private final LoggerService loggerService;
 
-    @Autowired
-    private CustomerActivityRepository customerActivityRepository;
-
-    @Autowired
-    public Customer(TicketPoolService ticketPoolService, int customerRetrievalRate, int customerId) {
-        this.ticketPoolService = ticketPoolService;
-        this.customerRetrievalRate = customerRetrievalRate;
+    public Customer(int customerId, int retrievalRate, TicketPoolService ticketPoolService, LoggerService loggerService) {
         this.customerId = customerId;
+        this.retrievalRate = retrievalRate;
+        this.ticketPoolService = ticketPoolService;
+        this.loggerService = loggerService;
     }
 
     @Override
     public void run() {
-        while (true) {
-            String ticket = ticketPoolService.removeTicket(customerId);
+        try {
+            while (ticketPoolService.canRetrieveTickets()) {
+                String ticket = ticketPoolService.removeTicket(customerId);
 
-            if (ticket != null) {
-                customerActivityRepository.save(new CustomerActivity(null, customerId, ticket, null));
-            } else if (ticketPoolService.isComplete()) {
-                customerActivityRepository.save(new CustomerActivity(null, customerId, "Finished - No More Tickets", null));
-                break;
-            }
+                if (ticket != null) {
+                    loggerService.logInfo("Customer " + customerId + " retrieved: " + ticket);
+                } else {
+                    loggerService.logInfo("Customer " + customerId + " found no tickets available.");
+                }
 
-            try {
-                Thread.sleep(customerRetrievalInterval); // Simulate retrieval interval
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                customerActivityRepository.save(new CustomerActivity(null, customerId, "Interrupted", null));
-                return;
+                Thread.sleep(retrievalRate);
             }
+            loggerService.logInfo("Customer " + customerId + " finished retrieving tickets.");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            loggerService.logError("Customer " + customerId + " interrupted.");
         }
     }
 }
-
-

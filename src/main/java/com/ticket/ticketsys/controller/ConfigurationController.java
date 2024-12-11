@@ -1,4 +1,5 @@
 package com.ticket.ticketsys.controller;
+import com.ticket.ticketsys.dto.ConfigurationRequest;
 
 
 import com.ticket.ticketsys.entity.Configuration;
@@ -13,22 +14,25 @@ import java.util.List;
 public class ConfigurationController {
 
     @Autowired
-    private ConfigurationService service;
+    private ConfigurationService configurationService;
 
     @PostMapping
-    public Configuration saveConfiguration(@RequestBody Configuration config) {
-        return service.saveConfiguration(config);
+    public Configuration saveConfiguration(@RequestBody ConfigurationRequest request) {
+        return configurationService.saveConfiguration(
+                request.getTotalTickets(),
+                request.getMaxTicketCapacity(),
+                request.getTicketReleaseRate(),
+                request.getCustomerRetrievalRate()
+        );
     }
 
     @GetMapping
     public List<Configuration> getAllConfigurations() {
-        return service.getAllConfigurations();
+        return configurationService.getAllConfigurations();
     }
 
     @GetMapping("/{id}")
-    public Configuration getConfiguration(@PathVariable String id) {
-        return service.getConfigurationById(id);
+    public Configuration getConfigurationById(@PathVariable String id) {
+        return configurationService.getConfigurationById(id);
     }
 }
-
-

@@ -5,22 +5,18 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "customer_activities")
 public class CustomerActivity {
-
     @Id
-    private String id; // Auto-generated MongoDB identifier
-    private int customerId; // ID of the customer performing the action
-    private String ticketDetails; // Details of the ticket retrieved or action taken
-    private String timestamp; // Action timestamp
-    private int customerRetrievalInterval;
+    private String id;
+    private int customerId;
+    private String ticketId;
+    private String timestamp;
 
-    public CustomerActivity(String id, int customerId, String ticketDetails, String timestamp) {
+    public CustomerActivity(String id, int customerId, String ticketId, String timestamp) {
         this.id = id;
         this.customerId = customerId;
-        this.ticketDetails = ticketDetails;
+        this.ticketId = ticketId;
         this.timestamp = timestamp;
     }
-
-    public CustomerActivity() {}
 
     // Getters and Setters
     public String getId() {
@@ -39,12 +35,12 @@ public class CustomerActivity {
         this.customerId = customerId;
     }
 
-    public String getTicketDetails() {
-        return ticketDetails;
+    public String getTicketId() {
+        return ticketId;
     }
 
-    public void setTicketDetails(String ticketDetails) {
-        this.ticketDetails = ticketDetails;
+    public void setTicketId(String ticketId) {
+        this.ticketId = ticketId;
     }
 
     public String getTimestamp() {
@@ -55,4 +51,3 @@ public class CustomerActivity {
         this.timestamp = timestamp;
     }
 }
-

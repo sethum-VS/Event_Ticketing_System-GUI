@@ -6,24 +6,32 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
 public class ConfigurationService {
 
     @Autowired
-    private ConfigurationRepository repository;
+    private ConfigurationRepository configurationRepository;
 
-    public Configuration saveConfiguration(Configuration config) {
-        config.setCreatedAt(LocalDateTime.now().toString());
-        return repository.save(config);
+    public Configuration saveConfiguration(int totalTickets, int maxTicketCapacity, int ticketReleaseRate, int customerRetrievalRate) {
+        Configuration configuration = new Configuration(
+                null,
+                totalTickets,
+                maxTicketCapacity,
+                ticketReleaseRate,
+                customerRetrievalRate,
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+        );
+        return configurationRepository.save(configuration);
     }
 
     public List<Configuration> getAllConfigurations() {
-        return repository.findAll();
+        return configurationRepository.findAll();
     }
 
     public Configuration getConfigurationById(String id) {
-        return repository.findById(id).orElse(null);
+        return configurationRepository.findById(id).orElse(null);
     }
 }
