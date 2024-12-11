@@ -4,17 +4,23 @@ import com.ticket.ticketsys.entity.CustomerActivity;
 import com.ticket.ticketsys.entity.VendorActivity;
 import com.ticket.ticketsys.repository.CustomerActivityRepository;
 import com.ticket.ticketsys.repository.VendorActivityRepository;
+import com.ticket.ticketsys.threads.Customer;
+import com.ticket.ticketsys.threads.Vendor;
+import com.ticket.ticketsys.service.TicketPoolService;
+import com.ticket.ticketsys.service.LoggerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+
 @Service
 public class SimulationService {
 
     private static final int NUM_VENDORS = 2;
     private static final int NUM_CUSTOMERS = 2;
+    private final LoggerService loggerService;
 
     @Autowired
     private TicketPoolService ticketPoolService;
@@ -30,30 +36,40 @@ public class SimulationService {
 
     private volatile boolean isRunning = false;
 
-    public void startSimulation(int totalTickets, int maxTicketCapacity, int ticketReleaseRate, int customerRetrievalRate) {
-        if (isRunning) {
-            throw new IllegalStateException("Simulation is already running!");
-        }
+    public SimulationService(LoggerService loggerService) {
+        this.loggerService = loggerService;
+    }
 
-        // Initialize ticket pool
+    public void startSimulation(int totalTickets, int maxTicketCapacity, int ticketReleaseRate, int customerRetrievalRate) {
         ticketPoolService.initializePool(totalTickets, maxTicketCapacity);
 
-        // Start vendor threads
-        for (int i = 0; i < NUM_VENDORS; i++) {
-            int vendorId = i + 1;
-            vendorThreads[i] = new Thread(() -> runVendor(vendorId, ticketReleaseRate));
-            vendorThreads[i].start();
+        // Create and start static vendor threads
+        Thread vendor1 = new Thread(new Vendor(1, ticketReleaseRate, ticketPoolService , loggerService));
+        Thread vendor2 = new Thread(new Vendor(2, ticketReleaseRate, ticketPoolService, loggerService));
+
+        // Create and start static customer threads
+        Thread customer1 = new Thread(new Customer(1, customerRetrievalRate, ticketPoolService, loggerService));
+        Thread customer2 = new Thread(new Customer(2, customerRetrievalRate, ticketPoolService, loggerService));
+
+        vendor1.start();
+        vendor2.start();
+        customer1.start();
+        customer2.start();
+
+        try {
+            vendor1.join();
+            vendor2.join();
+            customer1.join();
+            customer2.join();
+        } catch (InterruptedException e) {
+            loggerService.logInfo("Simulation interrupted: " + e.getMessage());
+            Thread.currentThread().interrupt();
         }
 
-        // Start customer threads
-        for (int i = 0; i < NUM_CUSTOMERS; i++) {
-            int customerId = i + 1;
-            customerThreads[i] = new Thread(() -> runCustomer(customerId, customerRetrievalRate));
-            customerThreads[i].start();
-        }
-
-        isRunning = true;
+        loggerService.logInfo("Simulation completed. Resetting the system.");
+        ticketPoolService.resetPool();
     }
+
 
     public void resetSimulation() {
         if (!isRunning) {
@@ -74,48 +90,9 @@ public class SimulationService {
 
         // Reset the ticket pool
         ticketPoolService.resetPool();
-
         isRunning = false;
     }
 
-    private void runVendor(int vendorId, int releaseRate) {
-        try {
-            while (ticketPoolService.canAddTickets()) {
-                String ticketId = "Ticket-" + System.nanoTime();
-                ticketPoolService.addTicket(ticketId, vendorId);
-
-                // Log the action in the database
-                VendorActivity activity = new VendorActivity(null, vendorId, ticketId, getCurrentTimestamp());
-                vendorActivityRepository.save(activity);
-
-                Thread.sleep(releaseRate);
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-    }
-
-    private void runCustomer(int customerId, int retrievalRate) {
-        try {
-            while (ticketPoolService.canRetrieveTickets()) {
-                String ticket = ticketPoolService.removeTicket(customerId);
-
-                if (ticket != null) {
-                    // Log the action in the database
-                    CustomerActivity activity = new CustomerActivity(null, customerId, ticket, getCurrentTimestamp());
-                    customerActivityRepository.save(activity);
-                }
-
-                Thread.sleep(retrievalRate);
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-    }
-
-    private String getCurrentTimestamp() {
-        return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-    }
 
     public boolean isSimulationRunning() {
         return isRunning;

@@ -1,12 +1,15 @@
 package com.ticket.ticketsys.controller;
 
 import com.ticket.ticketsys.entity.CustomerActivity;
+import com.ticket.ticketsys.entity.LogEntry;
 import com.ticket.ticketsys.entity.VendorActivity;
 import com.ticket.ticketsys.service.SimulationService;
 import com.ticket.ticketsys.repository.CustomerActivityRepository;
 import com.ticket.ticketsys.repository.VendorActivityRepository;
 import com.ticket.ticketsys.dto.ConfigurationRequest; // Import ConfigurationRequest instead of SimulationRequest
+import com.ticket.ticketsys.service.LoggerService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,6 +17,9 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/simulation")
 public class SimulationController {
+
+    @Autowired
+    private LoggerService loggerService;
 
     @Autowired
     private SimulationService simulationService;
@@ -88,5 +94,11 @@ public class SimulationController {
     @GetMapping("/vendors/activities")
     public List<VendorActivity> getVendorActivities() {
         return vendorActivityRepository.findAll();
+    }
+
+    // Fetch logs
+    @GetMapping("/logs")
+    public ResponseEntity<List<LogEntry>> getLogs() {
+        return ResponseEntity.ok(loggerService.getAllLogs());
     }
 }

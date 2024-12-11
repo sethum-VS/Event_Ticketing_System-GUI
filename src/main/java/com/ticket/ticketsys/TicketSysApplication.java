@@ -9,3 +9,4 @@ public class TicketSysApplication {
 		SpringApplication.run(TicketSysApplication.class, args);
 	}
 }
+

@@ -22,8 +22,7 @@ public class Vendor implements Runnable {
         try {
             while (ticketPoolService.canAddTickets()) {
                 String ticketId = "Ticket-" + System.nanoTime();
-                ticketPoolService.addTicket(ticketId, vendorId);
-
+                ticketPoolService.addTickets(ticketId);
                 loggerService.logInfo("Vendor " + vendorId + " added: " + ticketId);
 
                 Thread.sleep(releaseRate);
