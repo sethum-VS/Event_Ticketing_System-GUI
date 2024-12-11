@@ -6,9 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ConfigurationService {
@@ -17,7 +15,7 @@ public class ConfigurationService {
     private ConfigurationRepository repository;
 
     public Configuration saveConfiguration(Configuration config) {
-        config.setCreatedAt(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
+        config.setCreatedAt(LocalDateTime.now().toString());
         return repository.save(config);
     }
 
@@ -25,7 +23,7 @@ public class ConfigurationService {
         return repository.findAll();
     }
 
-    public Optional<Configuration> getConfigurationById(String id) {
-        return repository.findById(id);
+    public Configuration getConfigurationById(String id) {
+        return repository.findById(id).orElse(null);
     }
 }

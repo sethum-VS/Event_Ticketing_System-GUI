@@ -1,29 +1,49 @@
 package com.ticket.ticketsys.threads;
 
-import com.ticket.ticketsys.pool.TicketPool;
+import com.ticket.ticketsys.entity.CustomerActivity;
+import com.ticket.ticketsys.repository.CustomerActivityRepository;
+import com.ticket.ticketsys.service.TicketPoolService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+@Component
 public class Customer implements Runnable {
-    private final TicketPool ticketPool;
-    private final int retrievalInterval;
-    private final int customerId; // New parameter
 
-    public Customer(TicketPool ticketPool, int retrievalInterval, int customerId) {
-        this.ticketPool = ticketPool;
-        this.retrievalInterval = retrievalInterval;
-        this.customerId = customerId; // Initialize the new field
+    private final TicketPoolService ticketPoolService;
+    private final int customerRetrievalInterval;
+    private final int customerId;
+
+    @Autowired
+    private CustomerActivityRepository customerActivityRepository;
+
+    @Autowired
+    public Customer(TicketPoolService ticketPoolService, int customerRetrievalRate, int customerId) {
+        this.ticketPoolService = ticketPoolService;
+        this.customerRetrievalRate = customerRetrievalRate;
+        this.customerId = customerId;
     }
 
     @Override
     public void run() {
-        try {
-            while (true) {
-                String ticket = ticketPool.removeTicket();
-                System.out.println("Customer " + customerId + " retrieved: " + ticket);
-                Thread.sleep(retrievalInterval);
+        while (true) {
+            String ticket = ticketPoolService.removeTicket(customerId);
+
+            if (ticket != null) {
+                customerActivityRepository.save(new CustomerActivity(null, customerId, ticket, null));
+            } else if (ticketPoolService.isComplete()) {
+                customerActivityRepository.save(new CustomerActivity(null, customerId, "Finished - No More Tickets", null));
+                break;
             }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+
+            try {
+                Thread.sleep(customerRetrievalInterval); // Simulate retrieval interval
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                customerActivityRepository.save(new CustomerActivity(null, customerId, "Interrupted", null));
+                return;
+            }
         }
     }
 }
+
 

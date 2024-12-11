@@ -1,9 +1,9 @@
 package com.ticket.ticketsys.controller;
 
+
 import com.ticket.ticketsys.entity.Configuration;
 import com.ticket.ticketsys.service.ConfigurationService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,20 +16,19 @@ public class ConfigurationController {
     private ConfigurationService service;
 
     @PostMapping
-    public ResponseEntity<Configuration> saveConfiguration(@RequestBody Configuration config) {
-        return ResponseEntity.ok(service.saveConfiguration(config));
+    public Configuration saveConfiguration(@RequestBody Configuration config) {
+        return service.saveConfiguration(config);
     }
 
     @GetMapping
-    public ResponseEntity<List<Configuration>> getAllConfigurations() {
-        return ResponseEntity.ok(service.getAllConfigurations());
+    public List<Configuration> getAllConfigurations() {
+        return service.getAllConfigurations();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Configuration> getConfigurationById(@PathVariable String id) {
-        return service.getConfigurationById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public Configuration getConfiguration(@PathVariable String id) {
+        return service.getConfigurationById(id);
     }
 }
+
 
